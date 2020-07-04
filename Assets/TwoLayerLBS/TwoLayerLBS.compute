@@ -1,0 +1,19 @@
+﻿#pragma kernel SkinVirtualJoints
+
+RWStructuredBuffer<float3x4> VirtualJoints;
+StructuredBuffer<float3x4> MasterJoints;
+StructuredBuffer<float> VirtualWeight;
+StructuredBuffer<uint> VirtualIndex;
+int NumInfluences;
+
+[numthreads(1024, 1, 1)]
+void SkinVirtualJoints(uint3 id : SV_DispatchThreadID)
+{
+    uint head = id.x * NumInfluences;
+    float3x4 m = (float3x4)0;
+    for (uint i = 0; i < NumInfluences; ++i)
+    {
+        m += VirtualWeight[head + i] * MasterJoints[VirtualIndex[head + i]];
+    }
+    VirtualJoints[id.x] = m;
+}
