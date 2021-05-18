@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System.IO;
+using System.Runtime.InteropServices;
 
 public class TwoLayerLBS : MonoBehaviour
 {
@@ -20,6 +21,12 @@ public class TwoLayerLBS : MonoBehaviour
     ComputeBuffer cbVirtualIndex;
     float[] masterJoints;
     Matrix4x4[] masterInvBindPose;
+
+    [DllImport("kernel32.dll")]
+    extern static int QueryPerformanceCounter(ref long x);
+
+    [DllImport("kernel32.dll")]
+    extern static int QueryPerformanceFrequency(ref long x);
 
     void ReadVirtualWeight(ref float[] weight, ref uint[] index)
     {
@@ -126,7 +133,7 @@ public class TwoLayerLBS : MonoBehaviour
         for (int i = 0; i < numMasterJoints; ++i)
         {
             ecb.path = "Joints/Joint" + System.String.Format("{0, 2:D2}", i + 1);
-            var m = ComposeMatrix(animClip, ecb, Time.time) * masterInvBindPose[i];
+            var m = ComposeMatrix(animClip, ecb, Time.time % animClip.length) * masterInvBindPose[i];
             for (int r = 0; r < 3; ++r)
             {
                 for (int c = 0; c < 4; ++c)
@@ -136,7 +143,17 @@ public class TwoLayerLBS : MonoBehaviour
             }
         }
         cbMasterJoints.SetData(masterJoints);
-        computeShader.Dispatch(computeShaderID, numVirtualJoints, 1, 1);
+        
+        //long freq, before, after;
+        //freq = before = after = 0;
+        //QueryPerformanceFrequency(ref freq);
+        //QueryPerformanceCounter(ref before);
+        //for (long l = 0; l < 10000; ++l)
+        {
+            computeShader.Dispatch(computeShaderID, numVirtualJoints, 1, 1);
+        }
+        //QueryPerformanceCounter(ref after);
+        //Debug.Log((after - before) * 1.0e6f / freq);
     }
 
     void OnDestroy()
