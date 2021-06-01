@@ -31,6 +31,8 @@ public class TwoLayerLBS : MonoBehaviour
 
     public bool viewPrimary;
     public bool viewSecondary;
+    public float scalef;
+    public float voffset;
 
     [DllImport("kernel32.dll")]
     extern static int QueryPerformanceCounter(ref long x);
@@ -75,7 +77,7 @@ public class TwoLayerLBS : MonoBehaviour
                 if (maxw[id] < w)
                 {
                     maxw[id] = w;
-                    initPos[id] = mesh.vertices[v];
+                    initPos[id] = mesh.vertices[v] * scalef + Vector3.up * voffset;
                 }
             }
         }
