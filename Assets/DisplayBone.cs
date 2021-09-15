@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 
 public class DisplayBone : MonoBehaviour
 {
@@ -29,7 +30,33 @@ public class DisplayBone : MonoBehaviour
         return q;
     }
 
-    void DrawBones(Transform t)
+    public static void DrawThickLine(Vector3 start, Vector3 end, float thickness, Color color)
+    {
+    #if !UNITY_EDITOR
+        Gizmos.color = color;
+        Gizmos.DrawLine(start, end);
+        return;
+    #endif
+
+        Camera c = Camera.current;
+        if (c == null)
+        {
+            return;
+        }
+        if (c.clearFlags == CameraClearFlags.Depth || c.clearFlags == CameraClearFlags.Nothing)
+        {
+            return;
+        }
+        // Only draw the line when it is the closest thing to the camera
+        // (Remove the Z-test code and other objects will not occlude the line.)
+        var prevZTest = Handles.zTest;
+        Handles.zTest = UnityEngine.Rendering.CompareFunction.LessEqual;
+        Handles.color = color;
+        Handles.DrawAAPolyLine(thickness * 10, new Vector3[] { start, end });
+        Handles.zTest = prevZTest;
+    }
+
+    void DrawBones(Transform t, float size = 1.0f)
     {
         foreach (Transform child in t)
         {
@@ -40,7 +67,7 @@ public class DisplayBone : MonoBehaviour
             //Quaternion rotation = Quaternion.identity;
             Gizmos.color = Color.black;
             //Gizmos.DrawLine(t.position, position);
-            Gizmos.DrawSphere(t.position, 0.0025f);
+            //Gizmos.DrawSphere(t.position, 0.0025f);
             child.rotation = Quaternion.Euler(0, 0, 0);
             if (DisplayNames == true)
             {
@@ -58,15 +85,9 @@ public class DisplayBone : MonoBehaviour
                 axisX = rotation * axisX;
                 axisY = rotation * axisY;
                 axisZ = rotation * axisZ;
-
-                Gizmos.color = Color.red;
-                Gizmos.DrawLine(position, position + axisX);
-
-                Gizmos.color = Color.green;
-                Gizmos.DrawLine(position, position + axisY);
-
-                Gizmos.color = Color.blue;
-                Gizmos.DrawLine(position, position + axisZ);
+                DrawThickLine(position, position + axisX * size, size, Color.red);
+                DrawThickLine(position, position + axisY * size, size, Color.green);
+                DrawThickLine(position, position + axisZ * size, size, Color.blue);
             }
             DrawBones(child);
         }
@@ -74,6 +95,6 @@ public class DisplayBone : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        DrawBones(transform);
+        DrawBones(transform, 1.5f);
     }
 }
